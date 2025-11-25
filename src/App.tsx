@@ -1,80 +1,35 @@
-
-import { Routes, Route, Navigate, Outlet, useNavigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
-import AppLayout from './layouts/AppLayout';
-import Signup from './components/Signup';
-import Home from './pages/Home';
-import Profile from './pages/Profile';
-import type { User, AuthFormData } from './types/auth';
-import Login from './components/Login';
-
-const RequireAuth: React.FC<{ isAuthed: boolean }> = ({ isAuthed }) => {
-  return isAuthed ? <Outlet /> : <Navigate to="/login" replace />;
-};
-
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { UserProvider } from "./context/UserContext";
+import Navbar from "./components/Navbar";
+import Login from "./components/Login";
+import Signup from "./components/Signup";
+import Home from "./pages/Home";
+import ProtectedRoute from "./components/ProtectedRoute";
+import axios from "axios";
+axios.defaults.baseURL='http://localhost:4000'
 function App() {
-  const navigate = useNavigate();
-
-  const [currentUser, setCurrentUser] = useState<User | null>(() => {
-    const stored = localStorage.getItem('currentUser');
-    return stored ? (JSON.parse(stored) as User) : null;
-  });
-
-  useEffect(() => {
-    if (currentUser) {
-      localStorage.setItem('currentUser', JSON.stringify(currentUser));
-    } else {
-      localStorage.removeItem('currentUser');
-    }
-  }, [currentUser]);
-
-  const handleAuthSubmit = (data: AuthFormData) => {
-    const user: User = {
-      email: data.email,
-      name: data.name || 'User',
-      avatar: null,
-    };
-    setCurrentUser(user);
-    navigate('/', { replace: true });
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    setCurrentUser(null);
-    navigate('/login', { replace: true });
-  };
-
   return (
-    <Routes>
-      {/* Auth routes (modal overlays) */}
-      <Route
-        path="/login"
-        element={
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-            <Login onSubmit={handleAuthSubmit} onSwitchMode={() => navigate('/signup')} />
-          </div>
-        }
-      />
-      
-      <Route
-        path="/signup"
-        element={
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-            <Signup onSubmit={handleAuthSubmit} onSwitchMode={() => navigate('/login')} />
-          </div>
-        }
-      />
+    <Router>
+      <UserProvider>
+        <div className="min-h-screen bg-gray-50">
+          <Navbar />
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
 
-      {/* Protected app routes */}
-      <Route element={<RequireAuth isAuthed={!!currentUser} />}>
-        <Route element={<AppLayout user={currentUser!} onLogout={handleLogout} />}>
-          <Route index element={<Home />} />         
-          <Route path="profile" element={<Profile />} />
-        </Route>
-      </Route>
+            {/* Protected Routes */}
+            <Route element={<ProtectedRoute />}>
+              <Route path="/" element={<Home />} />
+              {/* Add more protected routes here */}
+            </Route>
 
-      {/* Fallback */}
-    </Routes>
+            {/* Catch all */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </div>
+      </UserProvider>
+    </Router>
   );
 }
 

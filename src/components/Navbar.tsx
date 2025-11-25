@@ -1,136 +1,74 @@
+import { useContext, useState } from "react";
+import { UserContext } from "../context/UserContext";
+import { Menu, X, UserRound, LogOut, LogIn, UserPlus } from "lucide-react";
+import { useNavigate,Link } from "react-router-dom";
 
-import { useState, useRef, useEffect } from 'react';
-import { Settings, ChevronDown, LogOut, Zap } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import type { User } from '../types/auth';
-
-type NavbarProps = {
-  user: User;
-  onLogout: () => void;
-};
-
-const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
-  const [menuOpen, setMenuOpen] = useState<boolean>(false);
+const Navbar = () => {
+  const { user, logout } = useContext(UserContext);
   const navigate = useNavigate();
-  const menuRef = useRef<HTMLDivElement | null>(null);
-
-  const handleMenuToggle = () => setMenuOpen(prev => !prev);
+  const [open, setOpen] = useState(false);
 
   const handleLogout = () => {
-    setMenuOpen(false);
-    onLogout();
+    logout();
+    setOpen(false);
+    navigate("/login");
   };
 
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as Node | null;
-      if (menuRef.current && target && !menuRef.current.contains(target)) {
-        setMenuOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
   return (
-    <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md shadow-sm border-b border-gray-200 font-sans">
-      <div className="flex items-center justify-between px-4 py-3 md:px-6 max-w-7xl mx-auto">
-        {/* Left - Logo + Brand */}
-        <div className="flex items-center gap-2 cursor-pointer group" onClick={() => navigate('/')}>
-          <div className="relative w-10 h-10 flex items-center justify-center rounded-xl bg-gradient-to-br from-fuchsia-500 via-purple-500 to-indigo-500 shadow-lg group-hover:shadow-purple-300/50 group-hover:scale-105 transition-all duration-300">
-            <Zap className="w-6 h-6 text-white" />
-            <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-white rounded-full shadow-md animate-ping" />
-          </div>
+    <nav className="bg-white shadow-md px-6 py-3 flex justify-between items-center sticky top-0 z-50">
+      {/* Brand */}
+      <Link to="/" className="text-2xl font-bold text-blue-600">
+        TaskManager
+      </Link>
 
-          <span className="text-2xl font-extrabold bg-gradient-to-r from-fuchsia-500 via-purple-500 to-indigo-500 bg-clip-text text-transparent tracking-wide">
-            TaskFlow
-          </span>
-        </div>
+      {/* Mobile menu button */}
+      <button
+        className="md:hidden text-gray-700 hover:text-blue-600 transition"
+        onClick={() => setOpen(!open)}
+        aria-label="Toggle menu"
+      >
+        {open ? <X size={26} /> : <Menu size={26} />}
+      </button>
 
-        {/* Right - Controls */}
-        <div className="flex items-center gap-4">
-          <button
-            className="p-2 text-gray-600 hover:text-purple-500 transition-colors duration-300 hover:bg-purple-50 rounded-full"
-            onClick={() => navigate('/profile')}
-            aria-label="Settings"
-            type="button"
-          >
-            <Settings className="w-5 h-5" />
-          </button>
-
-          {/* User Dropdown */}
-          <div ref={menuRef} className="relative">
-            <button
-              onClick={handleMenuToggle}
-              className="flex items-center gap-2 px-3 py-2 rounded-full cursor-pointer hover:bg-purple-50 transition-colors duration-300 border border-transparent hover:border-purple-200"
-              type="button"
-              aria-haspopup="menu"
-              aria-expanded={menuOpen}
+      {/* Menu */}
+      <div
+        className={`${
+          open ? "block" : "hidden"
+        } md:flex gap-6 items-center absolute md:static bg-white md:bg-transparent left-0 top-full w-full md:w-auto shadow md:shadow-none p-4 md:p-0`}
+      >
+        {!user ? (
+          <>
+            <Link
+              to="/login"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-2 text-blue-600 font-medium hover:opacity-80 transition"
             >
-              <div className="relative">
-                {user.avatar ? (
-                  <img
-                    src={user.avatar}
-                    alt="Avatar"
-                    className="w-9 h-9 rounded-full bg-gradient-to-br shadow-sm"
-                  />
-                ) : (
-                  <div className="w-8 h-8 flex items-center justify-center rounded-full bg-gradient-to-br from-fuchsia-500 to-purple-600 text-white font-semibold shadow-md">
-                    {user.name?.[0]?.toUpperCase() ?? 'U'}
-                  </div>
-                )}
-                <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-400 rounded-full border-2 border-white animate-pulse" />
-              </div>
-
-              <div className="text-left hidden md:block">
-                <p className="text-sm font-medium text-gray-800">{user.name}</p>
-                <p className="text-xs text-gray-500 font-normal">{user.email}</p>
-              </div>
-
-              <ChevronDown
-                className={`w-4 h-4 text-gray-500 transition-transform duration-300 ${
-                  menuOpen ? 'rotate-180' : ''
-                }`}
-              />
+              <LogIn size={20} /> Login
+            </Link>
+            <Link
+              to="/signup"
+              onClick={() => setOpen(false)}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700 transition"
+            >
+              <UserPlus size={20} /> Sign Up
+            </Link>
+          </>
+        ) : (
+          <>
+            <div className="flex items-center gap-2 font-semibold text-gray-700">
+              <UserRound size={22} className="text-blue-600" />
+              <span>{user.name}</span>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="bg-red-500 text-white px-3 py-2 rounded-lg flex items-center gap-2 hover:bg-red-600 transition"
+            >
+              <LogOut size={20} /> Logout
             </button>
-
-            {menuOpen && (
-              <ul
-                className="absolute top-14 right-0 w-56 bg-white rounded-2xl shadow-xl border border-purple-100 z-50 overflow-hidden animate-fadeIn"
-                role="menu"
-              >
-                <li className="p-2">
-                  <button
-                    onClick={() => {
-                      setMenuOpen(false);
-                      navigate('/profile');
-                    }}
-                    className="w-full px-4 py-2.5 text-left hover:bg-purple-50 text-sm text-gray-700 transition-colors flex items-center gap-2 group"
-                    role="menuitem"
-                    type="button"
-                  >
-                    <Settings className="w-4 h-4 text-gray-700" />
-                    Profile Settings
-                  </button>
-                </li>
-                <li className="p-2">
-                  <button
-                    onClick={handleLogout}
-                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-red-50 text-red-600"
-                    role="menuitem"
-                    type="button"
-                  >
-                    <LogOut className="w-4 h-4" />
-                    Log Out
-                  </button>
-                </li>
-              </ul>
-            )}
-          </div>
-        </div>
+          </>
+        )}
       </div>
-    </header>
+    </nav>
   );
 };
 
