@@ -6,6 +6,7 @@ import Signup from './components/Signup';
 import Home from './pages/Home';
 import Profile from './pages/Profile';
 import type { User, AuthFormData } from './types/auth';
+import Login from './components/Login';
 
 const RequireAuth: React.FC<{ isAuthed: boolean }> = ({ isAuthed }) => {
   return isAuthed ? <Outlet /> : <Navigate to="/login" replace />;
@@ -46,6 +47,14 @@ function App() {
   return (
     <Routes>
       {/* Auth routes (modal overlays) */}
+      <Route
+        path="/login"
+        element={
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+            <Login onSubmit={handleAuthSubmit} onSwitchMode={() => navigate('/signup')} />
+          </div>
+        }
+      />
       
       <Route
         path="/signup"
